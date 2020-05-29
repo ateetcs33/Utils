@@ -1,7 +1,3 @@
-/*
- * Copyright 2017 Hippo B.V. (http://www.onehippo.com)
- */
-
 
 import java.io.InputStream;
 import java.util.HashMap;
