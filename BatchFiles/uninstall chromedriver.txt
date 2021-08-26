@@ -1,0 +1,10 @@
+sudo apt-get install chromium-browser
+ sudo apt-get remove chromium --purge 
+rm -rf ~/.config/chromium 
+rm -rf ~/.cache/chromium 
+sudo rm -rf /etc/chromium 
+
+ sudo apt-get purge google-chrome-stable 
+sudo apt-get purge chromium-browser
+ mv ~/.config/chromium/ ~/.config/chromium.bak/ 
+sudo apt-get purge google-chrome-stable mv ~/.config/google-chrome/ ~/.config/google-chrome.bak/

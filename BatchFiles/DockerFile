@@ -1,0 +1,55 @@
+//************************************************************************************
+echo "Workspace path : " $WORKSPACE
+cd $WORKSPACE/dashboard-qa/
+export REALM="$Realm"
+export XMLSUITEFILE="$TestSuiteFile"
+echo "Realm value from jenkins script : " $REALM
+echo "TestSuiteFile value from jenkins script : " $XMLSUITEFILE
+./scripts/run_headless.sh 
+//************************************************************************************
+
+
+DockerFile
+FROM Ubuntu
+RUN apt-get update
+RUN apt-get install python
+
+
+COPY . /opt/source-code
+
+
+docker build DockerFile -t selenium/selenium-tests
+
+
+docker exec -it 899646d29c56 bash
+
+
+
+Selenium run docker container
+
+1. docker pull selenium/standalone-chrome-debug
+2. docker run -d -p 4444:4444 -p 5900:5900 -v /dev/shm:/dev/shm selenium/standalone-chrome-debug:latest
+Or
+
+Stop & remove the container
+docker rm $(docker stop $(docker ps -a -q --filter ancestor=selenium/standalone-chrome-debug --format="{{.ID}}"))
+
+docker rmi $(docker images --format '{{.Repository}}:{{.Tag}}' | grep 'selenium/standalone-chrome-debug')
+
+
+Selenium run docker grid container
+1. Create docker-compose.yaml file 
+2. Start Grid by running below cmd 
+   docker-compose up
+3. if required increase chrome instance
+   docker-compose scale chrome=2
+4. run Selenium code
+5. Stop grid by running below cmd
+   docker-compose down
+
+
+docker run -d -p 4444:4444 -v /dev/shm:/dev/shm selenium/standalone-chrome:latest
+docker rm $(docker stop $(docker ps -a -q --filter ancestor=selenium/standalone-chrome --format="{{.ID}}"))
+docker rm $(docker stop $(docker ps -a -q --filter ancestor=selenium/node-chrome --format="{{.ID}}"))
+docker rmi $(docker images --format '{{.Repository}}:{{.Tag}}' | grep 'selenium/standalone-chrome')
+

@@ -1,0 +1,270 @@
+Btch trigger runscope
+
+
+function triggerTests() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = ss.getSheets();
+  
+  for (var s = 0; s < sheets.size; s++) {
+  var sheet = ss.getSheets()[s];
+
+    sheet.getRange(6, 2, 3, 10).clearContent();
+    
+    //get the Test Trigger ID
+    var testIdRange = sheet.getRange(1,2);
+    var testId = testIdRange.getValue();
+    var url = 'https://api.runscope.com/radar/' + testId + '/batch';
+    
+    //get the number of Variables
+    var varCountRange = sheet.getRange(2,2);
+    var varCount = varCountRange.getValue();
+    
+      //get the number of Sets
+    var setCountRange = sheet.getRange(3,2);
+    var setCount = setCountRange.getValue();
+    
+    var payload = [];
+    
+    var startRow = 10;  // First row of data to process
+    var numRows = varCount;   // Number of rows to process
+    
+    // Fetch the range of cells with variable names and sets
+    var dataRange = sheet.getRange(startRow, 1, numRows, setCount +1)
+    var data = dataRange.getValues();
+
+    var variableNames = [];
+    var variableValues = [];
+    
+    //load the data
+    for (var i = 0; i< data.length; i++) {
+      var row = data[i];
+      var thisVariableName = row[0];
+      var thisVariableValue = []
+      for (var j = 0; j < setCount; j++) {
+        thisVariableValue[j] = row[j+1];
+      }
+      variableNames.push(thisVariableName);
+      variableValues.push(thisVariableValue);
+    }
+
+    //build the payload to pass with trigger
+    for (var j = 0; j < setCount; j++) {
+      var variableSet = {}
+      for (var i = 0; i < varCount; i++) {
+        var currentVarName = variableNames[i];
+        var currentVarValue = variableValues[i][j];
+
+  //      Browser.msgBox(variableValues[i][j]);
+        variableSet[currentVarName] = currentVarValue;
+      }
+      payload.push(variableSet)
+    }
+    //Browser.msgBox(JSON.stringify(payload));
+    var finalPayload = JSON.stringify(payload);
+
+    //construct the request
+    var headers = {
+      'Content-Type': 'application/json'
+    };
+    var options = {
+      'method': 'post',
+      'headers': headers,
+      'payload': finalPayload
+    };
+    var response = UrlFetchApp.fetch(url, options);
+    var json = response.getContentText();
+    var responseData = JSON.parse(json);
+    //Browser.msgBox(JSON.stringify(responseData));
+    var myTests = responseData.data.runs
+    var testArray = [] // hold URLs for test results
+    var apiArray = [] //hold API URls for test results
+    var baseUrl = "https://api.runscope.com";
+    
+    //iterate through the test responses
+    for (var i=0; i < myTests.length; i++) {
+      var thisTest = myTests[i]
+
+      //check that variables from this test match the variables sent
+      for (var j=0; j < setCount; j++) {
+        //check variables for each property
+        var weMatch = Object.compare(thisTest.variables, payload[j]);
+        if (weMatch && !testArray[j]){
+          testArray[j] = thisTest.test_run_url
+          apiArray[j] = baseUrl + "/buckets/" + thisTest.bucket_key + "/tests/" + thisTest.test_id + "/results/" + thisTest.test_run_id;
+        }
+       
+      }
+     //Browser.msgBox("Run: " + i + " url: " + testArray[i]);
+     sheet.getRange(6,i+2).setValue(testArray[i]);
+     sheet.getRange(7,i+2).setValue(apiArray[i]);
+    }
+     var timestamp = new Date();
+     sheet.getRange(4, 2).setValue(timestamp);
+  }
+}
+
+
+
+
+
+
+//function to get test results
+function checkAllTests(){
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = ss.getSheets();
+  
+  for (var s = 0; s < sheets.size; s++) {
+    var sheet = ss.getSheets()[s];
+    
+    //get the number of Sets
+    var testCountRange = sheet.getRange(4,4);
+    var testCount = testCountRange.getValue();
+    
+    //get token
+    var tokenRange = sheet.getRange(1,6);
+    var runscopeToken = tokenRange.getValue();
+    if (runscopeToken.length != 36) {
+      var htmlOutput = HtmlService
+      .createHtmlOutput('You need to get a Runscope API token to get results. Go to <a href="https://www.runscope.com/docs/api/authentication">https://www.runscope.com/docs/api/authentication</a> for help!');
+      SpreadsheetApp.getUi().showModalDialog(htmlOutput, 'Runscope Token Needed');
+    } else {
+    
+      for (var i = 0; i < testCount; i++) {
+        var urlRange = sheet.getRange(7,i+2)
+        var testUrl = urlRange.getValue();
+        //construct the request
+        var authHeader = 'Bearer ' + runscopeToken;
+        var headers = {
+          'Authorization': authHeader
+        };
+        var options = {
+          'method': 'get',
+          'headers': headers,
+        };
+        var response = UrlFetchApp.fetch(testUrl, options);
+        var json = response.getContentText();
+        var responseData = JSON.parse(json);
+        //    Browser.msgBox(JSON.stringify(responseData));
+        sheet.getRange(8,i+2).setValue(responseData.data.result);
+      }
+    }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+function triggerAllTests() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheets = ss.getSheets();
+  for (var s = 0; s < sheets.length; s++) {
+    var sheet = ss.getSheets()[s];
+    var sheet = sheets[s];
+
+    sheet.getRange(6, 2, 3, 10).clearContent();
+    
+    //get the Test Trigger ID
+    var testIdRange = sheet.getRange(1,2);
+    var testId = testIdRange.getValue();
+    var url = 'https://api.runscope.com/radar/' + testId + '/batch';
+    
+    //get the number of Variables
+    var varCountRange = sheet.getRange(2,2);
+    var varCount = varCountRange.getValue();
+    
+    //get the number of Sets
+    var setCountRange = sheet.getRange(3,2);
+    var setCount = setCountRange.getValue();
+    
+    var payload = null;
+    payload = [];
+    
+    var startRow = 10;  // First row of data to process
+    var numRows = varCount;   // Number of rows to process
+    
+    // Fetch the range of cells with variable names and sets
+    var dataRange = sheet.getRange(startRow, 1, numRows, setCount +1)
+    var data = dataRange.getValues();
+
+    var variableNames = [];
+    var variableValues = [];
+    
+    //load the data
+    for (var i = 0; i< data.length; i++) {
+      var row = data[i];
+      var thisVariableName = row[0];
+      var thisVariableValue = []
+      for (var j = 0; j < setCount; j++) {
+        thisVariableValue[j] = row[j+1];
+      }
+      variableNames.push(thisVariableName);
+      variableValues.push(thisVariableValue);
+    }
+
+    //build the payload to pass with trigger
+    for (var j = 0; j < setCount; j++) {
+      var variableSet = {}
+      for (var i = 0; i < varCount; i++) {
+        var currentVarName = variableNames[i];
+        var currentVarValue = variableValues[i][j];
+
+        //Browser.msgBox(variableValues[i][j]);
+        variableSet[currentVarName] = currentVarValue;
+      }
+      payload.push(variableSet)
+    }
+    //Browser.msgBox(JSON.stringify(payload));
+    var finalPayload = JSON.stringify(payload);
+
+    //construct the request
+    var headers = {
+      'Content-Type': 'application/json'
+    };
+    var options = {
+      'method': 'post',
+      'headers': headers,
+      'payload': finalPayload
+    };
+    var response = UrlFetchApp.fetch(url, options);
+    var json = response.getContentText();
+    var responseData = JSON.parse(json);
+    //Browser.msgBox(JSON.stringify(responseData));
+    var myTests = responseData.data.runs
+    var testArray = [] // hold URLs for test results
+    var apiArray = [] //hold API URls for test results
+    var baseUrl = "https://api.runscope.com";
+    
+    //iterate through the test responses
+    for (var i=0; i < myTests.length; i++) {
+      var thisTest = myTests[i]
+
+      //check that variables from this test match the variables sent
+      for (var j=0; j < setCount; j++) {
+        //check variables for each property
+        var weMatch = Object.compare(thisTest.variables, payload[j]);
+        //Browser.msgBox("Sheet Name: " + sheet.getName() + " thisTest : " + thisTest + " Run: " + i + " wematch : " + weMatch + " testArray[j] : " + !testArray[j]);
+        if (weMatch && !testArray[j]){
+          //Browser.msgBox("testArray[j] : " + !testArray[j]);
+          testArray[j] = thisTest.test_run_url
+          apiArray[j] = baseUrl + "/buckets/" + thisTest.bucket_key + "/tests/" + thisTest.test_id + "/results/" + thisTest.test_run_id;
+        }
+       
+      }
+      //Browser.msgBox("Run: " + i + " url: " + testArray[i]);
+      Browser.msgBox("Sheet Name: " + sheet.getName() + " Run: " + i + " url: " + testArray[i] + " api : " + apiArray[i]);
+      console.log("Sheet Name: " + sheet.getName() + " Run: " + i + " url: " + testArray[i] + " api : " + apiArray[i]);
+      sheet.getRange(6,i+2).setValue(testArray[i]);
+      sheet.getRange(7,i+2).setValue(apiArray[i]);
+    }
+    var timestamp = new Date();
+    sheet.getRange(4, 2).setValue(timestamp);
+  }
+}
+

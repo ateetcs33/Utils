@@ -1,0 +1,58 @@
+Jenkins cmds
+
+echo "Workspace path : " $WORKSPACE
+cd $WORKSPACE/dashboard-qa/
+
+export REALM="$Realm"
+export XMLSUITEFILE="$TestSuiteFile"
+
+#s3cmd get s3://br-resources/qa/test/bloomreach-jar/ ~/.m2/repository/com/ --recursive --skip-existing
+
+
+
+#echo "Maven clean"
+#mvn clean
+
+#echo "Maven compile"
+#mvn compile
+#cd ~/.m2/repository/com/google/gdata-util/1.34/
+#pwd
+#ls -l
+#mv ~/.m2/repository/com/google/gdata-util/1.34/gdata-util-1.34.jar.lastUpdated ~/.m2/repository/com/google/gdata-util/1.34/gdata-util-1.34.jar
+#mv ~/.m2/repository/com/google/gdata-util/1.34/gdata-util-1.34.pom.lastUpdated ~/.m2/repository/com/google/gdata-util/1.34/gdata-util-1.34.pom
+#echo "after"
+#ls -l
+
+#cd $WORKSPACE/dashboard-qa/
+
+#echo "Maven install skip tests"
+#mvn -e clean install -DskipTests
+
+# Checking the input parameters
+echo "Realm value from jenkins script : " $REALM
+echo "TestSuiteFile value from jenkins script : " $XMLSUITEFILE
+
+# Download and setup maven home
+./scripts/setup_maven.sh
+
+# Run headless script
+./scripts/run_headless.sh
+
+
+
+origin/parallel_execution
+
+
+
+
+##Show docker disk usage
+##https://docs.docker.com/engine/reference/commandline/system_df/
+#docker system df
+#
+##To view the approximate size of a running container
+#docker container ls -s
+#
+##To show the sizes of your images.
+#docker image ls
+
+
